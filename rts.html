@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>RTS try</title>
+</head>
+<body>
+    <canvas id="myCanvas" width="1280" height="700" style="border:1px solid #000000;"></canvas>
+    <!-- This has to be here to prevent an exports not defined error  -->
+    <script>var exports = {};</script>
+    <script src="rts.js"></script>
+    <script>
+        let canvas = document.getElementById('myCanvas')
+
+        let camera = new Camera();
+        let box = new Box(0, 0, 30, 30, new Color(76, 97, 130, 255));
+        let dragNdrop = new Box(0, 0, 0, 0, new Color(0, 122, 255, 255));
+        let c = new Box(-70, 30, 80, 80, new Color(76, 97, 130, 255));
+        let engine = new Engine(canvas, camera, [box, dragNdrop, c], 60);
+        let fullScreen = {x: 0, y: 0, width: canvas.width, height: canvas.height};
+
+        //Left pan
+        engine.addMouseHandler({x: 0, y: 0, width: 70, height: canvas.height}, 
+        'hover', () => {
+            camera.pan(-10, 0);
+        });
+        //Right pan
+        engine.addMouseHandler({x: canvas.width - 70, y: 0, width: canvas.width, height: canvas.height}, 
+        'hover', () => {
+            camera.pan(10, 0);
+        });
+        //Top pan
+        engine.addMouseHandler({x: 0, y: 0, width: canvas.width, height: 70}, 
+        'hover', () => {
+            camera.pan(0, 10);
+        });
+        //Bottom pan
+        engine.addMouseHandler({x: 0, y: canvas.height - 70, width: canvas.width, height: canvas.height}, 
+        'hover', () => {
+            camera.pan(0, -10);
+        });
+
+        let dragCorner = {x: 0, y: 0};
+        engine.addMouseHandler(fullScreen,
+        'leftClick', (mousePos) => {
+            console.log('hold');
+            pos = engine.mouseToWorld(mousePos);
+   
+            dragNdrop.x = dragCorner.x + (pos.x - dragCorner.x) / 2;
+            dragNdrop.y = dragCorner.y + (pos.y - dragCorner.y) / 2;
+            dragNdrop.width = dragCorner.x - pos.x;
+            dragNdrop.height = dragCorner.y - pos.y;
+        });
+
+        engine.addMouseHandler(fullScreen,
+        'start_leftClick', (mousePos) => {
+            console.log('start');
+            pos = engine.mouseToWorld(mousePos);
+
+            dragCorner.x = pos.x;
+            dragCorner.y = pos.y;
+            dragNdrop.x = pos.x;
+            dragNdrop.y = pos.y;
+            dragNdrop.width = 10;
+            dragNdrop.height = 10;
+        });
+
+        engine.addMouseHandler(fullScreen,
+        'end_leftClick', (mousePos) => {
+            console.log('end');
+            pos = engine.mouseToWorld(mousePos);
+            dragNdrop.width = 0;
+            dragNdrop.height = 0;
+            dragCorner = {x: 0, y: 0};
+        })
+
+        engine.run();
+    </script>
+</body>
+</html>
