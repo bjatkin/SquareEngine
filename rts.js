@@ -24,12 +24,21 @@ var Camera = /** @class */ (function () {
         //Clear the frame
         this.ctx.fillStyle = this.bgColor;
         this.ctx.fillRect(0, 0, this.width, this.height);
-        this.drawables.forEach(function (d) {
-            //TODO this call could be optimized!
-            var newX = _this.width / 2 + d.x - _this.x;
-            var newY = _this.height / 2 + d.y + _this.y;
-            d.draw(_this.ctx, newX, newY);
-        });
+        var currentLayer = 0;
+        var drawnCount = 0;
+        do {
+            drawnCount = 0;
+            this.drawables.forEach(function (d) {
+                if (d.layer == currentLayer) {
+                    //TODO this call could be optimized!
+                    var newX = _this.width / 2 + d.x - _this.x;
+                    var newY = _this.height / 2 + d.y + _this.y;
+                    d.draw(_this.ctx, newX, newY);
+                    drawnCount++;
+                }
+            });
+            currentLayer++;
+        } while (drawnCount != 0);
     };
     Camera.prototype.addDrawable = function (add) {
         this.drawables.push(add);
@@ -62,16 +71,19 @@ var Color = /** @class */ (function () {
 exports.Color = Color;
 ;
 var Box = /** @class */ (function () {
-    function Box(x, y, width, height, color) {
+    function Box(x, y, width, height, color, layer) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.color = color;
+        this.layer = layer;
     }
     Box.prototype.draw = function (ctx, x, y) {
         ctx.fillStyle = this.color.ToHex();
+        ctx.globalAlpha = this.color.a / 255;
         ctx.fillRect(x - this.width / 2, y - this.height / 2, this.width, this.height);
+        ctx.globalAlpha = 1.0;
     };
     return Box;
 }());

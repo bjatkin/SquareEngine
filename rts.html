@@ -15,9 +15,9 @@
         let canvas = document.getElementById('myCanvas')
 
         let camera = new Camera();
-        let box = new Box(0, 0, 30, 30, new Color(76, 97, 130, 255));
-        let dragNdrop = new Box(0, 0, 0, 0, new Color(0, 122, 255, 255));
-        let c = new Box(-70, 30, 80, 80, new Color(76, 97, 130, 255));
+        let box = new Box(0, 0, 30, 30, new Color(76, 97, 130, 255), 0);
+        let dragNdrop = new Box(0, 0, 0, 0, new Color(0, 122, 255, 100), 1);
+        let c = new Box(-70, 30, 80, 80, new Color(76, 97, 130, 255), 0);
         let engine = new Engine(canvas, camera, [box, dragNdrop, c], 60);
         let fullScreen = {x: 0, y: 0, width: canvas.width, height: canvas.height};
 

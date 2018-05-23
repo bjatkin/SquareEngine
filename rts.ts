@@ -33,12 +33,21 @@ export class Camera {
         //Clear the frame
         this.ctx.fillStyle = this.bgColor;
         this.ctx.fillRect(0, 0, this.width, this.height);
-        this.drawables.forEach(d => {
-            //TODO this call could be optimized!
-            let newX = this.width/2 + d.x - this.x;
-            let newY = this.height/2 + d.y + this.y;
-            d.draw(this.ctx, newX, newY);
-        });
+        let currentLayer = 0;
+        let drawnCount = 0;
+        do {
+            drawnCount = 0;
+            this.drawables.forEach(d => {
+                if (d.layer == currentLayer) {
+                    //TODO this call could be optimized!
+                    let newX = this.width/2 + d.x - this.x;
+                    let newY = this.height/2 + d.y + this.y;
+                    d.draw(this.ctx, newX, newY);
+                    drawnCount++;
+                }
+            });
+            currentLayer++;
+        } while (drawnCount != 0)
     }
 
     addDrawable(add: Drawable){
@@ -59,6 +68,7 @@ export interface Drawable {
     y: number;
     width: number;
     height: number;
+    layer: number;
 
     draw(_: CanvasRenderingContext2D, x: number, y: number): void;
 };
@@ -88,17 +98,22 @@ export class Box implements Drawable{
     width: number;
     height: number;
     color: Color;
-    constructor(x, y, width, height, color){
+    layer: number;
+
+    constructor(x, y, width, height, color, layer){
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.color = color;
+        this.layer = layer;
     }
 
     draw(ctx: CanvasRenderingContext2D, x: number, y: number): void {
         ctx.fillStyle = this.color.ToHex();
+        ctx.globalAlpha = this.color.a/255;
         ctx.fillRect(x - this.width/2, y - this.height/2, this.width, this.height);
+        ctx.globalAlpha = 1.0;
     }
 }
 
