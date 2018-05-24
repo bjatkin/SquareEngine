@@ -15,10 +15,19 @@
         let canvas = document.getElementById('myCanvas')
 
         let camera = new Camera();
-        let box = new Box(0, 0, 30, 30, new Color(76, 97, 130, 255), 0);
+        let physics = new PhysicsEngine(1);
+
+        let box = new Box(-300, 0, 30, 30, new Color(76, 97, 130, 255), 0);
+        box.isPhysical = true;
+        box.solid = true;
         let dragNdrop = new Box(0, 0, 0, 0, new Color(0, 122, 255, 100), 1);
-        let c = new Box(-70, 30, 80, 80, new Color(76, 97, 130, 255), 0);
-        let engine = new Engine(canvas, camera, [box, dragNdrop, c], 60);
+        let c = new Box(0, canvas.height/2 - 30, canvas.width, 30, new Color(76, 97, 130, 255), 0);
+        c.solid = true;
+        
+
+
+        let engine = new Engine(canvas, camera, physics, [box, dragNdrop, c], 60);
+        
         let fullScreen = {x: 0, y: 0, width: canvas.width, height: canvas.height};
 
         //Left pan
@@ -45,7 +54,6 @@
         let dragCorner = {x: 0, y: 0};
         engine.addMouseHandler(fullScreen,
         'leftClick', (mousePos) => {
-            console.log('hold');
             pos = engine.mouseToWorld(mousePos);
    
             dragNdrop.x = dragCorner.x + (pos.x - dragCorner.x) / 2;
@@ -56,7 +64,6 @@
 
         engine.addMouseHandler(fullScreen,
         'start_leftClick', (mousePos) => {
-            console.log('start');
             pos = engine.mouseToWorld(mousePos);
 
             dragCorner.x = pos.x;
@@ -69,7 +76,6 @@
 
         engine.addMouseHandler(fullScreen,
         'end_leftClick', (mousePos) => {
-            console.log('end');
             pos = engine.mouseToWorld(mousePos);
             dragNdrop.width = 0;
             dragNdrop.height = 0;
