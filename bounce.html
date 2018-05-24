@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>RTS try</title>
+</head>
+<body>
+    <canvas id="myCanvas" width="1280" height="700" style="border:1px solid #000000;"></canvas>
+    <!-- This has to be here to prevent an exports not defined error  -->
+    <script>var exports = {};</script>
+    <script src="rts.js"></script>
+    <script>
+        let canvas = document.getElementById('myCanvas')
+
+        let camera = new Camera();
+        let physics = new PhysicsEngine(1);
+
+        let ball = new Box(-300, 0, 30, 30, new Color(76, 97, 130, 255), 0);
+        ball.isPhysical = true;
+        ball.solid = true;
+        ball.elasticity = 0.8;
+        let floor = new Box(0, canvas.height/2 - 30, canvas.width, 30, new Color(76, 97, 130, 255), 0);
+        floor.solid = true;
+        
+        let engine = new Engine(canvas, camera, physics, [ball, floor], 60);
+
+        engine.addKeyHandler('end_Space', () => {
+            if (floor.y - ball.y < 100 && ball.velocity < 0){
+                ball.velocity = -35;
+            }
+        });
+
+        engine.run();
+    </script>
+</body>
+</html>
