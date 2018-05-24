@@ -78,6 +78,10 @@ var Box = /** @class */ (function () {
         this.height = height;
         this.color = color;
         this.layer = layer;
+        this.solid = false;
+        this.velocity = 0;
+        this.elasticity = 0.9;
+        this.isPhysical = false;
     }
     Box.prototype.draw = function (ctx, x, y) {
         ctx.fillStyle = this.color.ToHex();
@@ -95,7 +99,7 @@ var EventHandeler = /** @class */ (function () {
 }());
 exports.EventHandeler = EventHandeler;
 var Engine = /** @class */ (function () {
-    function Engine(canvas, camera, objects, framerate) {
+    function Engine(canvas, camera, physics, objects, framerate) {
         var _this = this;
         this.cameras = [camera];
         this.currentCamera = this.cameras[0];
@@ -110,6 +114,7 @@ var Engine = /** @class */ (function () {
         this.mouseStates = [];
         this.mousePosition = { x: 0, y: 0 };
         this.canvas = canvas;
+        this.physicsEngine = physics;
         this.addEventListeners(canvas);
     }
     Engine.prototype.addEventListeners = function (canvas) {
@@ -166,6 +171,7 @@ var Engine = /** @class */ (function () {
         setInterval(function () {
             _this.currentCamera.drawScene();
             _this.handleEvents();
+            _this.physicsEngine.runPhysics(_this.objects);
         }, 1000 / this.framrate);
     };
     Engine.prototype.addMouseHandler = function (boundingBox, event, callback) {
@@ -237,3 +243,41 @@ var Engine = /** @class */ (function () {
     return Engine;
 }());
 exports.Engine = Engine;
+var PhysicsEngine = /** @class */ (function () {
+    function PhysicsEngine(gravity) {
+        this.gravity = gravity;
+    }
+    PhysicsEngine.prototype.runPhysics = function (phys) {
+        var _this = this;
+        phys.forEach(function (p) {
+            if (!p.isPhysical) {
+                return;
+            }
+            p.velocity += _this.gravity;
+            p.y += p.velocity;
+            console.log(p.velocity);
+        });
+        phys.forEach(function (p, i) {
+            for (var start = i + 1; start < phys.length; start++) {
+                if (_this.collided(p, phys[start])) {
+                    p.velocity *= -p.elasticity;
+                    phys[start].velocity *= -phys[start].elasticity;
+                }
+            }
+        });
+    };
+    PhysicsEngine.prototype.collided = function (a, b) {
+        if (!a.solid || !b.solid) {
+            return false;
+        }
+        if (Math.abs(a.x - b.x) < (a.width / 2) + (b.width / 2) &&
+            Math.abs(a.y - b.y) < (a.height / 2) + (b.height / 2)) {
+            //Reposition the object and return true;
+            a.y -= a.velocity;
+            b.y -= b.velocity;
+            return true;
+        }
+    };
+    return PhysicsEngine;
+}());
+exports.PhysicsEngine = PhysicsEngine;

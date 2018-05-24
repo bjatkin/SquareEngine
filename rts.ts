@@ -73,6 +73,17 @@ export interface Drawable {
     draw(_: CanvasRenderingContext2D, x: number, y: number): void;
 };
 
+export interface Physical {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    velocity: number;
+    solid: boolean;
+    elasticity: number;
+    isPhysical: boolean;
+}
+
 export class Color {
     r: number;
     g: number;
@@ -92,13 +103,17 @@ export class Color {
     }
 };
 
-export class Box implements Drawable{
+export class Box implements Drawable, Physical{
     x: number;
     y: number;
     width: number;
     height: number;
     color: Color;
     layer: number;
+    solid: boolean;
+    velocity: number;
+    elasticity: number;
+    isPhysical: boolean;
 
     constructor(x, y, width, height, color, layer){
         this.x = x;
@@ -107,6 +122,10 @@ export class Box implements Drawable{
         this.height = height;
         this.color = color;
         this.layer = layer;
+        this.solid = false;
+        this.velocity = 0;
+        this.elasticity = 0.9;
+        this.isPhysical = false;
     }
 
     draw(ctx: CanvasRenderingContext2D, x: number, y: number): void {
@@ -127,7 +146,8 @@ export class EventHandeler {
 export class Engine {
     cameras: Array<Camera>;
     currentCamera: Camera;
-    objects: Array<Drawable>;
+    objects: Array<Box>;
+    physObjects: Array<Physical>;
     framrate: number;
 
     controllHandler: Array<EventHandeler>;
@@ -147,7 +167,9 @@ export class Engine {
     mousePosition: {x: number, y: number};
     canvas: HTMLCanvasElement;
 
-    constructor(canvas: HTMLCanvasElement, camera: Camera, objects: Array<Drawable>, framerate: number) {
+    physicsEngine: PhysicsEngine;
+
+    constructor(canvas: HTMLCanvasElement, camera: Camera, physics: PhysicsEngine, objects: Array<Box>, framerate: number) {
         this.cameras = [camera];
         this.currentCamera = this.cameras[0];
         this.objects = objects;
@@ -164,6 +186,7 @@ export class Engine {
         this.mouseStates = [];
         this.mousePosition = {x: 0, y: 0};
         this.canvas = canvas;
+        this.physicsEngine = physics;
 
         this.addEventListeners(canvas);
     }
@@ -225,6 +248,7 @@ export class Engine {
         setInterval(() => {          
             this.currentCamera.drawScene();
             this.handleEvents();
+            this.physicsEngine.runPhysics(this.objects);
         }, 1000/this.framrate);
     }
 
@@ -298,5 +322,45 @@ export class Engine {
                 this.mouseStates.push(state.substr(6, state.length));
             }
         });
+    }
+}
+
+export class PhysicsEngine {
+    gravity: number;
+
+    constructor(gravity: number) {
+        this.gravity = gravity;
+    }
+
+    runPhysics(phys: Physical[]):void {
+        phys.forEach(p => {
+            if (!p.isPhysical) {
+                return
+            }
+            p.velocity += this.gravity;
+            p.y += p.velocity;
+        });
+
+        phys.forEach((p, i) => {
+            for(let start = i + 1; start < phys.length; start++){
+                if (this.collided(p, phys[start])){
+                    p.velocity *= -p.elasticity;
+                    phys[start].velocity *= -phys[start].elasticity;
+                }
+            }
+        });
+    }
+
+    collided(a: Physical, b:Physical): boolean {
+        if (!a.solid || !b.solid) {
+            return false;
+        }
+        if (Math.abs(a.x - b.x) < (a.width / 2) + (b.width / 2) &&
+            Math.abs(a.y - b.y) < (a.height / 2) + (b.height / 2)) {
+            //Reposition the object and return true;
+            a.y -= a.velocity;
+            b.y -= b.velocity;
+            return true;
+        }
     }
 }
