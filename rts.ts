@@ -136,11 +136,15 @@ export class Box implements Drawable, Physical{
     }
 }
 
-export class EventHandeler {
+export class KeyEventHandeler {
     keyCode: string;
+    callBack: () => {};
+}
+
+export class MouseEventHandler {
     boundingBox: {x: number, y: number, width: number, height: number};
     mouseEvent: string;
-    callBack: Function;
+    callBack: (_:{x: number, y: number}) => {};
 }
 
 export class Engine {
@@ -150,10 +154,9 @@ export class Engine {
     physObjects: Array<Physical>;
     framrate: number;
 
-    controllHandler: Array<EventHandeler>;
+    keyHandlers: Array<KeyEventHandeler>;
+    mouseHandlers: Array<MouseEventHandler>;
 
-    addKeyStates: Array<string>;
-    removeKeyStates: Array<string>;
     keyStates: Array<string>;
 
     addMouseStates: Array<string>;
@@ -181,9 +184,11 @@ export class Engine {
 
         this.framrate = framerate;
 
-        this.controllHandler = [];
+        this.keyHandlers = [];
+        this.mouseHandlers = [];
         this.keyStates = [];
         this.mouseStates = [];
+
         this.mousePosition = {x: 0, y: 0};
         this.canvas = canvas;
         this.physicsEngine = physics;
@@ -227,18 +232,19 @@ export class Engine {
         document.addEventListener('keydown', (ev) => {
             let add = true;
             this.keyStates.forEach(s => {
-                if (s == ev.code){
+                if (s == 'start_' + ev.code){
                     add = false;
                 }
             });
             if (add) {
-                this.keyStates.push(ev.code);
+                this.keyStates.push('start_' + ev.code);
             }
         });
         document.addEventListener('keyup', (ev) => {
             this.keyStates.forEach((s, i) => {
                 if (s == ev.code) {
-                    this.keyStates = this.keyStates.splice(i, 1);
+                    this.keyStates.splice(i, 1);
+                    this.keyStates.push('end_' + ev.code);
                 }
             })
         });
@@ -246,25 +252,26 @@ export class Engine {
 
     run(): void{
         setInterval(() => {          
-            this.currentCamera.drawScene();
-            this.handleEvents();
+            this.handleKeyEvents();
+            this.handleMouseEvents();
             this.physicsEngine.runPhysics(this.objects);
+            this.currentCamera.drawScene();
         }, 1000/this.framrate);
     }
 
     addMouseHandler(boundingBox: {x: number, y: number, width: number, height: number}, event: string, callback: () => {}){
-        let ev: EventHandeler = new EventHandeler();
+        let ev: MouseEventHandler = new MouseEventHandler();
         ev.boundingBox = boundingBox;
         ev.callBack = callback;
         ev.mouseEvent = event;
-        this.controllHandler.push(ev);
+        this.mouseHandlers.push(ev);
     }
 
     addKeyHandler(keyCode: string, callback: () => {}){
-        let ev: EventHandeler = new EventHandeler();
+        let ev: KeyEventHandeler = new KeyEventHandeler();
         ev.keyCode = keyCode;
         ev.callBack = callback;
-        this.controllHandler.push(ev);
+        this.keyHandlers.push(ev);
     }
 
     mouseToWorld(mousePos) {
@@ -276,20 +283,29 @@ export class Engine {
         };
     }
 
-    private handleEvents() {
-        let actionPerformed = false;
-        this.controllHandler.forEach(handler => {
+    private handleKeyEvents() {
+        this.keyHandlers.forEach(handler => {
             this.keyStates.forEach(state => {
                 if (state == handler.keyCode) {
                     handler.callBack();
-                    actionPerformed = true;
                 }
             });
-        
-            if (actionPerformed) {
-                return;
-            }
+        });
 
+        this.keyStates.forEach((state, i) => {
+            if (state.substr(0, 3) == 'end'){
+                this.keyStates.splice(i, 1)
+            }
+            if (state.substr(0, 5) == 'start'){
+                this.keyStates.splice(i, 1);
+                this.keyStates.push(state.substr(6, state.length));
+            }
+        });
+    }
+
+    private handleMouseEvents() {
+        let actionPerformed = false;
+        this.mouseHandlers.forEach(handler => {
             if (handler.boundingBox != null
                 && this.mousePosition.x > handler.boundingBox.x
                 && this.mousePosition.x < handler.boundingBox.x + handler.boundingBox.width

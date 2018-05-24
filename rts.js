@@ -92,12 +92,18 @@ var Box = /** @class */ (function () {
     return Box;
 }());
 exports.Box = Box;
-var EventHandeler = /** @class */ (function () {
-    function EventHandeler() {
+var KeyEventHandeler = /** @class */ (function () {
+    function KeyEventHandeler() {
     }
-    return EventHandeler;
+    return KeyEventHandeler;
 }());
-exports.EventHandeler = EventHandeler;
+exports.KeyEventHandeler = KeyEventHandeler;
+var MouseEventHandler = /** @class */ (function () {
+    function MouseEventHandler() {
+    }
+    return MouseEventHandler;
+}());
+exports.MouseEventHandler = MouseEventHandler;
 var Engine = /** @class */ (function () {
     function Engine(canvas, camera, physics, objects, framerate) {
         var _this = this;
@@ -109,7 +115,8 @@ var Engine = /** @class */ (function () {
         });
         this.currentCamera.addCanvas(canvas);
         this.framrate = framerate;
-        this.controllHandler = [];
+        this.keyHandlers = [];
+        this.mouseHandlers = [];
         this.keyStates = [];
         this.mouseStates = [];
         this.mousePosition = { x: 0, y: 0 };
@@ -150,18 +157,19 @@ var Engine = /** @class */ (function () {
         document.addEventListener('keydown', function (ev) {
             var add = true;
             _this.keyStates.forEach(function (s) {
-                if (s == ev.code) {
+                if (s == 'start_' + ev.code) {
                     add = false;
                 }
             });
             if (add) {
-                _this.keyStates.push(ev.code);
+                _this.keyStates.push('start_' + ev.code);
             }
         });
         document.addEventListener('keyup', function (ev) {
             _this.keyStates.forEach(function (s, i) {
                 if (s == ev.code) {
-                    _this.keyStates = _this.keyStates.splice(i, 1);
+                    _this.keyStates.splice(i, 1);
+                    _this.keyStates.push('end_' + ev.code);
                 }
             });
         });
@@ -169,23 +177,24 @@ var Engine = /** @class */ (function () {
     Engine.prototype.run = function () {
         var _this = this;
         setInterval(function () {
-            _this.currentCamera.drawScene();
-            _this.handleEvents();
+            _this.handleKeyEvents();
+            _this.handleMouseEvents();
             _this.physicsEngine.runPhysics(_this.objects);
+            _this.currentCamera.drawScene();
         }, 1000 / this.framrate);
     };
     Engine.prototype.addMouseHandler = function (boundingBox, event, callback) {
-        var ev = new EventHandeler();
+        var ev = new MouseEventHandler();
         ev.boundingBox = boundingBox;
         ev.callBack = callback;
         ev.mouseEvent = event;
-        this.controllHandler.push(ev);
+        this.mouseHandlers.push(ev);
     };
     Engine.prototype.addKeyHandler = function (keyCode, callback) {
-        var ev = new EventHandeler();
+        var ev = new KeyEventHandeler();
         ev.keyCode = keyCode;
         ev.callBack = callback;
-        this.controllHandler.push(ev);
+        this.keyHandlers.push(ev);
     };
     Engine.prototype.mouseToWorld = function (mousePos) {
         var x = mousePos.x - (this.canvas.width / 2) + this.currentCamera.x;
@@ -195,19 +204,29 @@ var Engine = /** @class */ (function () {
             y: y,
         };
     };
-    Engine.prototype.handleEvents = function () {
+    Engine.prototype.handleKeyEvents = function () {
         var _this = this;
-        var actionPerformed = false;
-        this.controllHandler.forEach(function (handler) {
+        this.keyHandlers.forEach(function (handler) {
             _this.keyStates.forEach(function (state) {
                 if (state == handler.keyCode) {
                     handler.callBack();
-                    actionPerformed = true;
                 }
             });
-            if (actionPerformed) {
-                return;
+        });
+        this.keyStates.forEach(function (state, i) {
+            if (state.substr(0, 3) == 'end') {
+                _this.keyStates.splice(i, 1);
             }
+            if (state.substr(0, 5) == 'start') {
+                _this.keyStates.splice(i, 1);
+                _this.keyStates.push(state.substr(6, state.length));
+            }
+        });
+    };
+    Engine.prototype.handleMouseEvents = function () {
+        var _this = this;
+        var actionPerformed = false;
+        this.mouseHandlers.forEach(function (handler) {
             if (handler.boundingBox != null
                 && _this.mousePosition.x > handler.boundingBox.x
                 && _this.mousePosition.x < handler.boundingBox.x + handler.boundingBox.width
@@ -255,7 +274,6 @@ var PhysicsEngine = /** @class */ (function () {
             }
             p.velocity += _this.gravity;
             p.y += p.velocity;
-            console.log(p.velocity);
         });
         phys.forEach(function (p, i) {
             for (var start = i + 1; start < phys.length; start++) {
@@ -275,6 +293,12 @@ var PhysicsEngine = /** @class */ (function () {
             //Reposition the object and return true;
             a.y -= a.velocity;
             b.y -= b.velocity;
+            if (a.velocity == 0) {
+                b.y += (b.y - a.y);
+            }
+            if (b.velocity == 0) {
+                a.y += (a.y - b.y);
+            }
             return true;
         }
     };
