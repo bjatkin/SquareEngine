@@ -19,8 +19,8 @@
         let engine = new Engine(canvas, camera, physics, 60);
 
         let ball = {obj: new Box(-320, -200, 30, 30, new Color(76, 97, 130, 255), 1),
-            maxSquash: 1.7,
-            maxStretch: 1.7,
+            maxSquash: 2.5,
+            maxStretch: 4,
             squashSpeed: 0.2,
             stretchSpeed: 0.5,
             squash: 1,
@@ -39,6 +39,8 @@
         engine.addKeyHandler('end_Space', () => {
             if (floor.y - ball.obj.y < 100 && ball.obj.velocity < 0){
                 ball.obj.velocity = -40;
+                ball.stretch = ball.maxStretch;
+                ball.squash = 1;
             }
         });
 
@@ -46,8 +48,9 @@
             if (ball.squash < ball.maxSquash) {
                 ball.squash += ball.squashSpeed;
             }
-            ball.obj.width = ball.baseWidth * ball.squash;
-            ball.obj.height = ball.baseHeight * (ball.baseWidth / ball.obj.width);
+            if (ball.obj.velocity > 10) {
+                ball.obj.velocity = 10;
+            }
         });
 
         let addPoint = 180;
@@ -83,8 +86,21 @@
                         ball.obj.x -= 10;
                 }
             });
-
-
+            //Try to return the ball to it's normal shape
+            if (ball.squash > 1 && !engine.keyIsPressed('Space')) {
+                ball.squash -= ball.squashSpeed;
+            }
+            if (ball.stretch > 1 && !engine.keyIsPressed('Space')) {
+                ball.stretch -= ball.stretchSpeed;
+            }
+            
+            if (ball.squash > ball.stretch) {
+                ball.obj.width = ball.baseWidth * ball.squash;
+                ball.obj.height = ball.baseHeight * (ball.baseWidth / ball.obj.width);
+            } else {
+                ball.obj.width = ball.baseWidth * (ball.baseHeight / ball.obj.height);
+                ball.obj.height = ball.baseHeight * ball.stretch;
+            }
         });
 
         engine.run();

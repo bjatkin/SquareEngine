@@ -240,7 +240,7 @@ export class Engine {
         document.addEventListener('keydown', (ev) => {
             let add = true;
             this.keyStates.forEach(s => {
-                if (s == 'start_' + ev.code){
+                if (s == ev.code || s == 'start_' + ev.code || s == 'end_' + ev.code){
                     add = false;
                 }
             });
@@ -260,6 +260,14 @@ export class Engine {
 
     onUpdate(f: () => {}): void {
         this.updateFunc = f;
+    }
+
+    keyIsPressed(key :string):boolean {
+        let matched = false;
+        this.keyStates.forEach(k => {
+            matched = matched || (key == k);
+        });
+        return matched;
     }
 
     run(): void{
