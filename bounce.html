@@ -16,20 +16,75 @@
 
         let camera = new Camera();
         let physics = new PhysicsEngine(1);
+        let engine = new Engine(canvas, camera, physics, 60);
 
-        let ball = new Box(-300, 0, 30, 30, new Color(76, 97, 130, 255), 0);
-        ball.isPhysical = true;
-        ball.solid = true;
-        ball.elasticity = 0.8;
-        let floor = new Box(0, canvas.height/2 - 30, canvas.width, 30, new Color(76, 97, 130, 255), 0);
-        floor.solid = true;
+        let ball = {obj: new Box(-320, -200, 30, 30, new Color(76, 97, 130, 255), 1),
+            maxSquash: 1.7,
+            maxStretch: 1.7,
+            squashSpeed: 0.2,
+            stretchSpeed: 0.5,
+            squash: 1,
+            stretch: 1,
+            baseWidth: 30,
+            baseHeight: 30};
+
+        ball.obj.isPhysical = true;
+        ball.obj.solid = true;
+        ball.obj.elasticity = 0.8;
         
-        let engine = new Engine(canvas, camera, physics, [ball, floor], 60);
-
+        let floor = new Box(0, canvas.height/2 + 5, canvas.width, 30, new Color(76, 97, 130, 255), 0);
+        floor.solid = true;
+        engine.addObjects([ball.obj, floor]);
+        
         engine.addKeyHandler('end_Space', () => {
-            if (floor.y - ball.y < 100 && ball.velocity < 0){
-                ball.velocity = -35;
+            if (floor.y - ball.obj.y < 100 && ball.obj.velocity < 0){
+                ball.obj.velocity = -40;
             }
+        });
+
+        engine.addKeyHandler('Space', () => {
+            if (ball.squash < ball.maxSquash) {
+                ball.squash += ball.squashSpeed;
+            }
+            ball.obj.width = ball.baseWidth * ball.squash;
+            ball.obj.height = ball.baseHeight * (ball.baseWidth / ball.obj.width);
+        });
+
+        let addPoint = 180;
+        let ticks = 0;
+        enemies = [];
+        engine.onUpdate(() => {
+            ticks++;
+            //Add new walls
+            if (ticks >= addPoint) {
+                ticks = 0;
+                let e = {enemy: new Box(
+                    canvas.width / 2, 
+                    (Math.random() * canvas.height) - (canvas.height / 2) + 150, 
+                    70, 
+                    (Math.random() * 300), 
+                    new Color(120, 24, 35, 255), 0),
+                    speed: (Math.random() * 10) + 2};
+                enemies.push(e);
+                engine.addObjects([e.enemy]);
+            }
+            //Move the ball to the right on the screen
+            if (ball.obj.x < 100) {
+                ball.obj.x+= 3;
+            }
+            //Move enemies and do colision detection
+            enemies.forEach(e => {
+                e.enemy.x -= e.speed;
+                if (e.enemy.x < -canvas.width / 2 - 100){
+                    e.enemy.x = canvas.width / 2;
+                }
+                if (Math.abs(e.enemy.x - ball.obj.x) < (e.enemy.width / 2) + (ball.obj.width / 2) &&
+                    Math.abs(e.enemy.y - ball.obj.y) < (e.enemy.height / 2) + (ball.obj.height / 2)) {
+                        ball.obj.x -= 10;
+                }
+            });
+
+
         });
 
         engine.run();

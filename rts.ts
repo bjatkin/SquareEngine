@@ -163,6 +163,8 @@ export class Engine {
     removeMouseStates: Array<string>;
     mouseStates: Array<string>;
     
+    updateFunc: () => {};
+
     static MOUSE_STATES: string[] = ['leftClick','middleClick','rightClick',
         'start_leftClick','start_middleClick','start_rightClick',
         'end_leftClick','end_middleClick','end_rightClick'];
@@ -172,14 +174,12 @@ export class Engine {
 
     physicsEngine: PhysicsEngine;
 
-    constructor(canvas: HTMLCanvasElement, camera: Camera, physics: PhysicsEngine, objects: Array<Box>, framerate: number) {
+    constructor(canvas: HTMLCanvasElement, camera: Camera, physics: PhysicsEngine, framerate: number) {
+        this.updateFunc = () => void {};
+        this.objects = [];
         this.cameras = [camera];
         this.currentCamera = this.cameras[0];
-        this.objects = objects;
 
-        this.objects.forEach(d => {
-            this.currentCamera.addDrawable(d);
-        });
         this.currentCamera.addCanvas(canvas);
 
         this.framrate = framerate;
@@ -188,12 +188,20 @@ export class Engine {
         this.mouseHandlers = [];
         this.keyStates = [];
         this.mouseStates = [];
+        
 
         this.mousePosition = {x: 0, y: 0};
         this.canvas = canvas;
         this.physicsEngine = physics;
 
         this.addEventListeners(canvas);
+    }
+
+    addObjects(obj: Array<Box>) {
+        obj.forEach(o => {
+            this.objects.push(o);
+            this.currentCamera.addDrawable(o);
+        });
     }
 
     private addEventListeners(canvas: HTMLCanvasElement):void {
@@ -250,11 +258,16 @@ export class Engine {
         });
     }
 
+    onUpdate(f: () => {}): void {
+        this.updateFunc = f;
+    }
+
     run(): void{
         setInterval(() => {          
             this.handleKeyEvents();
             this.handleMouseEvents();
             this.physicsEngine.runPhysics(this.objects);
+            this.updateFunc();
             this.currentCamera.drawScene();
         }, 1000/this.framrate);
     }
@@ -376,6 +389,16 @@ export class PhysicsEngine {
             //Reposition the object and return true;
             a.y -= a.velocity;
             b.y -= b.velocity;
+            if (a.velocity == 0) {
+                b.y += (a.y - b.y) - (a.height / 2) - (b.height / 2);
+                return true;
+            }
+            if (b.velocity == 0) {
+                a.y += (b.y - a.y) - (a.height /2 ) - (b.height / 2);
+                return true;
+            }
+            b.y += (b.velocity/(b.velocity + a.velocity))*((a.y - b.y) - (a.height / 2) - (b.height / 2));
+            a.y += (a.velocity/(b.velocity + a.velocity))*((b.y - a.y) - (a.height / 2) - (b.height / 2));
             return true;
         }
     }
