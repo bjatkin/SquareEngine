@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div align="center">
+            <canvas id="myCanvas" width="1000" height="500" style="border:1px solid #000000;"></canvas>
+    </div>
+    <!-- This has to be here to prevent an exports not defined error  -->
+    <script>var exports = {};</script>
+    <script src="engine.js"></script>
+    <script>
+        let canvas = document.getElementById('myCanvas')
+
+        let camera = new Camera(canvas);
+        let R = 0;
+        let G = 0;
+        let B = 0;
+        let A = 255;
+        let layer = 0;
+
+        let colorPicker = new Box(-canvas.width / 2 + 30, -canvas.height / 2 + 35, 60, 70, new Color(R, G, B, A), 0);
+        let dragNdrop = new Box(0, 0, 0, 0, new Color(0, 122, 255, 70), 1);   
+
+        let RGBA = new Text('R: 0 G: 0 B: 0 A: 0', '30px Arial', new Color(70, 70, 70, 255), 70, 35, 2)
+        let LayerGUI = new Text('Layer: 0', '30px Arial', new Color(70, 70, 70, 255), 70, 70, 2);
+
+        let engine = new Engine(canvas, 60);
+        engine.addCamera(camera).addObjects([colorPicker, dragNdrop])
+        engine.addText([RGBA, LayerGUI]);
+
+        let fullScreen = {x: 0, y: 0, width: canvas.width, height: canvas.height};
+
+        engine.addKeyHandler('KeyA', () => {
+            R > 254 ? R : R++;
+            update(R, G, B, A, layer);
+        });
+        engine.addKeyHandler('KeyZ', () => {
+            R < 1 ? R : R--;
+            update(R, G, B, A, layer);
+        });
+
+        engine.addKeyHandler('KeyS', () => {
+            G > 254 ? G : G++;
+            update(R, G, B, A, layer);
+        });
+        engine.addKeyHandler('KeyX', () => {
+            G < 1 ? G : G--;
+            update(R, G, B, A, layer);
+        });
+
+        engine.addKeyHandler('KeyD', () => {
+            B > 254 ? B : B++;
+            update(R, G, B, A, layer);
+        });
+        engine.addKeyHandler('KeyC', () => {
+            B < 1 ? B : B--;
+            update(R, G, B, A, layer);
+        });
+
+        engine.addKeyHandler('KeyF', () =>{
+            A > 254 ? A : A++;
+            update(R, G, B, A, layer);
+        });
+        engine.addKeyHandler('KeyV', () => {
+            A < 1 ? A : A--;
+            update(R, G, B, A, layer);
+        });
+
+        engine.addKeyHandler('start_ArrowUp', () => {
+            layer++;
+            update(R, G, B, A, layer);
+        });
+        engine.addKeyHandler('start_ArrowDown', () => {
+            layer < 1 ? layer : layer--;
+            update(R, G, B, A, layer);
+        });
+
+        function update(R, G, B, A, L){
+            let c = new Color(R, G, B, A);
+            colorPicker.setColor(c);
+            dragNdrop.setColor(c);
+            RGBA.setText('R: ' + R + ' G: ' + G + ' B: ' + B + ' A: ' + A);
+            LayerGUI.setText('Layer: ' + L);
+        }
+
+        let dragCorner = {x: 0, y: 0};
+        engine.addMouseHandler(fullScreen,
+        'leftClick', (mousePos) => {
+            pos = engine.mouseToWorld(mousePos);
+
+            dragNdrop.x = dragCorner.x + (pos.x - dragCorner.x) / 2;
+            dragNdrop.y = dragCorner.y + (pos.y - dragCorner.y) / 2;
+            dragNdrop.width = dragCorner.x - pos.x;
+            dragNdrop.height = dragCorner.y - pos.y;
+        });
+
+        engine.addMouseHandler(fullScreen,
+        'start_leftClick', (mousePos) => {
+            pos = engine.mouseToWorld(mousePos);
+
+            dragCorner.x = pos.x;
+            dragCorner.y = pos.y;
+            dragNdrop.x = pos.x;
+            dragNdrop.y = pos.y;
+            dragNdrop.width = 10;
+            dragNdrop.height = 10;
+        });
+
+        engine.addMouseHandler(fullScreen,
+        'end_leftClick', (mousePos) => {
+            console.log('add')
+            engine.addObjects([new Box(dragNdrop.x, dragNdrop.y, dragNdrop.width, dragNdrop.height, new Color(R, G, B, A), layer)]);
+            pos = engine.mouseToWorld(mousePos);
+            dragNdrop.width = 0;
+            dragNdrop.height = 0;
+            dragCorner = {x: 0, y: 0};
+        })
+
+        engine.run();
+    </script>
+</body>
+</html>
