@@ -12,13 +12,14 @@
     </div>
     <!-- This has to be here to prevent an exports not defined error  -->
     <script>var exports = {};</script>
-    <script src="rts.js"></script>
+    <script src="engine.js"></script>
     <script>
         let canvas = document.getElementById('myCanvas')
 
-        let camera = new Camera();
+        let camera = new Camera(canvas);
         let physics = new PhysicsEngine(2);
-        let engine = new Engine(canvas, camera, physics, 60);
+        let engine = new Engine(canvas, 60);
+        engine.addCamera(camera).addPhysics(physics);
 
         let ball = {obj: new Box(-320, -200, 30, 30, new Color(120, 24, 35, 255), 1),
             maxSquash: 2.5,
