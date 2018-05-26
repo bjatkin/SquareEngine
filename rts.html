@@ -7,27 +7,25 @@
     <title>RTS try</title>
 </head>
 <body>
-    <canvas id="myCanvas" width="1280" height="700" style="border:1px solid #000000;"></canvas>
+    <div align="center">
+        <canvas id="myCanvas" width="1000" height="500" style="border:1px solid #000000;"></canvas>
+    </div>
     <!-- This has to be here to prevent an exports not defined error  -->
     <script>var exports = {};</script>
-    <script src="rts.js"></script>
+    <script src="engine.js"></script>
     <script>
         let canvas = document.getElementById('myCanvas')
 
-        let camera = new Camera();
-        let physics = new PhysicsEngine(1);
+        let camera = new Camera(canvas);
 
-        let box = new Box(-300, 0, 30, 30, new Color(76, 97, 130, 255), 0);
-        box.isPhysical = true;
-        box.solid = true;
-        let dragNdrop = new Box(0, 0, 0, 0, new Color(0, 122, 255, 100), 1);
-        let c = new Box(0, canvas.height/2 - 30, canvas.width, 30, new Color(76, 97, 130, 255), 0);
-        c.solid = true;
-        
+        let box = new Box(-300, 0, 30, 30, new Color(76, 97, 130, 255), 1);
+        let outlineB = new Box(-300, 0, 34, 34, new Color(200, 90, 0, 255), 0)
+        let dragNdrop = new Box(0, 0, 0, 0, new Color(0, 122, 255, 100), 2);   
 
+        let engine = new Engine(canvas, 60);
+        engine.addCamera(camera);
+        engine.addObjects([outlineB, box, dragNdrop]);
 
-        let engine = new Engine(canvas, camera, physics, [box, dragNdrop, c], 60);
-        
         let fullScreen = {x: 0, y: 0, width: canvas.width, height: canvas.height};
 
         //Left pan

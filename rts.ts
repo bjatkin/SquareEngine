@@ -204,29 +204,37 @@ export class Engine {
 
     physicsEngine: PhysicsEngine;
 
-    constructor(canvas: HTMLCanvasElement, camera: Camera, physics: PhysicsEngine, framerate: number) {
+    constructor(canvas: HTMLCanvasElement, framerate: number) {
         this.updateFunc = () => void {};
         this.objects = [];
         this.texts = [];
 
-        this.cameras = [camera];
-        this.currentCamera = this.cameras[0];
-
-        this.currentCamera.addCanvas(canvas);
-
+        this.cameras = [];
         this.framrate = framerate;
 
         this.keyHandlers = [];
         this.mouseHandlers = [];
         this.keyStates = [];
         this.mouseStates = [];
-        
 
         this.mousePosition = {x: 0, y: 0};
         this.canvas = canvas;
-        this.physicsEngine = physics;
 
         this.addEventListeners(canvas);
+    }
+
+    addPhysics(physics: PhysicsEngine): Engine {
+        this.physicsEngine = physics;
+        return this;
+    }
+
+    addCamera(camera: Camera): Engine {
+        this.cameras.push(camera);
+        if (this.cameras.length == 1) {
+            this.currentCamera = camera;
+            this.currentCamera.addCanvas(this.canvas);
+        }
+        return this;
     }
 
     addText(txt: Array<Text>) {
