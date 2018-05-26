@@ -66,8 +66,6 @@ export class Camera {
 export interface Drawable {
     x: number;
     y: number;
-    width: number;
-    height: number;
     layer: number;
 
     draw(_: CanvasRenderingContext2D, x: number, y: number): void;
@@ -102,6 +100,37 @@ export class Color {
         return '#' + (0x1000000 + rgb).toString(16).slice(1)
     }
 };
+
+export class Text implements Drawable {
+    x: number;
+    y: number;
+    layer: number;
+    font: string;
+    text: string;
+    color: Color;
+
+    constructor(text: string, font: string, color: Color, x: number, y: number, layer: number) {
+        this.x = x;
+        this.y = y;
+        this.layer = layer;
+        this.font = font;
+        this.text = text;
+        this.color = color;
+    }
+
+    draw(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+        ctx.font = this.font;
+        ctx.fillStyle = this.color.ToHex();
+        ctx.globalAlpha = this.color.a/255;
+        //We ignore the coordinates given to us by the camera
+        //becase text dosen't use world space.
+        ctx.fillText(this.text, this.x, this.y);
+    }
+
+    setText(text: string): void{
+        this.text = text;
+    }
+}
 
 export class Box implements Drawable, Physical{
     x: number;
@@ -151,6 +180,7 @@ export class Engine {
     cameras: Array<Camera>;
     currentCamera: Camera;
     objects: Array<Box>;
+    texts: Array<Text>;
     physObjects: Array<Physical>;
     framrate: number;
 
@@ -177,6 +207,8 @@ export class Engine {
     constructor(canvas: HTMLCanvasElement, camera: Camera, physics: PhysicsEngine, framerate: number) {
         this.updateFunc = () => void {};
         this.objects = [];
+        this.texts = [];
+
         this.cameras = [camera];
         this.currentCamera = this.cameras[0];
 
@@ -195,6 +227,13 @@ export class Engine {
         this.physicsEngine = physics;
 
         this.addEventListeners(canvas);
+    }
+
+    addText(txt: Array<Text>) {
+        txt.forEach(t => {
+            this.texts.push(t);
+            this.currentCamera.addDrawable(t);
+        })
     }
 
     addObjects(obj: Array<Box>) {

@@ -7,7 +7,9 @@
     <title>RTS try</title>
 </head>
 <body>
-    <canvas id="myCanvas" width="1280" height="700" style="border:1px solid #000000;"></canvas>
+    <div align="center">
+        <canvas id="myCanvas" width="1280" height="700" style="border:1px solid #000000;"></canvas>
+    </div>
     <!-- This has to be here to prevent an exports not defined error  -->
     <script>var exports = {};</script>
     <script src="rts.js"></script>
@@ -15,10 +17,10 @@
         let canvas = document.getElementById('myCanvas')
 
         let camera = new Camera();
-        let physics = new PhysicsEngine(1);
+        let physics = new PhysicsEngine(2);
         let engine = new Engine(canvas, camera, physics, 60);
 
-        let ball = {obj: new Box(-320, -200, 30, 30, new Color(76, 97, 130, 255), 1),
+        let ball = {obj: new Box(-320, -200, 30, 30, new Color(120, 24, 35, 255), 1),
             maxSquash: 2.5,
             maxStretch: 4,
             squashSpeed: 0.5,
@@ -36,9 +38,12 @@
         floor.solid = true;
         engine.addObjects([ball.obj, floor]);
         
-        engine.addKeyHandler('end_Space', () => {
-            if (floor.y - ball.obj.y < 100 && ball.obj.velocity < 0){
-                ball.obj.velocity = -40;
+        let score = new Text('Score: ', '30px Arial', new Color(0, 0, 0, 255), 10, 50, 2);
+        engine.addText([score]);
+
+        engine.addKeyHandler('end_Space', () =>   {
+            if (floor.y - ball.obj.y < 200 && ball.obj.velocity < 10){
+                ball.obj.velocity = -55;
                 ball.stretch = ball.maxStretch;
                 ball.squash = 1;
             }
@@ -48,16 +53,21 @@
             if (ball.squash < ball.maxSquash) {
                 ball.squash += ball.squashSpeed;
             }
-            if (ball.obj.velocity > 10) {
-                ball.obj.velocity = 10;
+            if (ball.obj.velocity > 12) {
+                ball.obj.velocity = 12;
             }
         });
 
         let addPoint = 180;
-        let ticks = 0;
-        enemies = [];
+        let ticks = 179;
+        let enemies = [];
+        let dead = false;
+        let scoreCount = 0;
+        
         engine.onUpdate(() => {
             ticks++;
+            scoreCount++;
+            score.setText('Score: ' + scoreCount);
             //Add new walls
             if (ticks >= addPoint) {
                 ticks = 0;
@@ -66,7 +76,7 @@
                     (Math.random() * canvas.height) - (canvas.height / 2) + 150, 
                     70, 
                     (Math.random() * 300), 
-                    new Color(120, 24, 35, 255), 0),
+                    new Color(100, 100, 100, 255), 0),
                     speed: (Math.random() * 10) + 2};
                 enemies.push(e);
                 engine.addObjects([e.enemy]);
@@ -100,6 +110,16 @@
             } else {
                 ball.obj.width = ball.baseWidth * (ball.baseHeight / ball.obj.height);
                 ball.obj.height = ball.baseHeight * ball.stretch;
+            }
+
+            // Check for death
+            if (ball.obj.x < -canvas.width / 2 && !dead) {
+                alert("Game Over!\n\nSCORE: " + scoreCount);
+                dead = true;
+            }
+
+            if (dead) {
+                document.location.reload();
             }
         });
 
