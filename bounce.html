@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>RTS try</title>
+    <title>Bounce</title>
 </head>
 <body>
     <div align="center">
-        <canvas id="myCanvas" width="1280" height="700" style="border:1px solid #000000;"></canvas>
+        <canvas id="myCanvas" width="1280" height="600" style="border:1px solid #000000;"></canvas>
     </div>
     <!-- This has to be here to prevent an exports not defined error  -->
     <script>var exports = {};</script>
@@ -35,7 +35,7 @@
         ball.obj.solid = true;
         ball.obj.elasticity = 0.8;
         
-        let floor = new Box(0, canvas.height/2 + 5, canvas.width, 30, new Color(76, 97, 130, 255), 0);
+        let floor = new Box(0, canvas.height/2 + 5, canvas.width, 30, new Color(100, 100, 100, 255), 0);
         floor.solid = true;
         engine.addObjects([ball.obj, floor]);
         
@@ -64,6 +64,9 @@
         let enemies = [];
         let dead = false;
         let scoreCount = 0;
+        let shake = false;
+        let shakeLen = 10;
+        let shakeCount = 0;
         
         engine.onUpdate(() => {
             ticks++;
@@ -94,6 +97,8 @@
                 }
                 if (Math.abs(e.enemy.x - ball.obj.x) < (e.enemy.width / 2) + (ball.obj.width / 2) &&
                     Math.abs(e.enemy.y - ball.obj.y) < (e.enemy.height / 2) + (ball.obj.height / 2)) {
+                        //Collision
+                        shake = true;
                         ball.obj.x -= 10;
                 }
             });
@@ -122,7 +127,25 @@
             if (dead) {
                 document.location.reload();
             }
+
+            //Check for camera shake
+            if (shake) {
+                cameraShake()
+                if (shakeCount >= shakeLen){
+                    shake = false;
+                    shakeCount = 0;
+                }
+                shakeCount++
+            } else {
+                camera.x = 0;
+                camera.y = 0;
+            }
         });
+
+        function cameraShake(){
+            camera.y = Math.random() * (15 * (shakeLen/(shakeCount * 2 + shakeLen)));
+            camera.x = Math.random() * (15 * (shakeLen/(shakeCount * 2 + shakeLen)));
+        }
 
         engine.run();
     </script>
