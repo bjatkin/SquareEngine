@@ -10,4 +10,4 @@ Thumbs.db
 
 # JS files will be generated #
 ##############################
-*.js
+# *.js

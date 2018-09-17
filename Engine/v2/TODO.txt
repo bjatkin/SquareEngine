@@ -1,0 +1,9 @@
+[] Add in animation juice when numbers are updated
+[] create a sprite builder program
+[] move the engin to TS
+[] commit to the TS game engine git hub
+[] fix bubble so that it dosent jitter (add safe zone?)
+[] Fix the bug where the mouse pos is offset when the canvas is not moved
+
+Helpful 
+ php -S 127.0.0.1:8008
